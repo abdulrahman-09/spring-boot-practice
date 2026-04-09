@@ -16,7 +16,7 @@ import lombok.*;
 public class User {
     @Id
     @Column(name = "id")
-    private int id;
+    private Integer id;
     @Column(name = "username")
     private String username;
     @Column(name = "password")
