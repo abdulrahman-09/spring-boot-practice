@@ -4,12 +4,16 @@ import com.am9.spring_security_lab.filter.CsrfCookieFilter;
 import com.am9.spring_security_lab.filter.JwtTokenGenerationFilter;
 import com.am9.spring_security_lab.filter.JwtTokenValidationFilter;
 import com.am9.spring_security_lab.filter.TempEmailFilter;
+import com.am9.spring_security_lab.security.CustomerUsernamePasswordAuthenticationProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -39,12 +43,12 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
         http.authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/register").permitAll()
+                .requestMatchers("/register", "/userlogin").permitAll()
                 .anyRequest().authenticated());
         http.csrf(csrfConfig -> csrfConfig
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .csrfTokenRequestHandler(csrfHandler)
-                .ignoringRequestMatchers("/register"));
+                .ignoringRequestMatchers("/register", "/userlogin"));
 
         http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
         http.addFilterBefore(new TempEmailFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -70,6 +74,15 @@ public class SecurityConfig {
 //    public CompromisedPasswordChecker compromisedPasswordChecker(){
 //        return new HaveIBeenPwnedRestApiPasswordChecker();
 //    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder){
+        CustomerUsernamePasswordAuthenticationProvider authenticationProvider = new CustomerUsernamePasswordAuthenticationProvider(userDetailsService, passwordEncoder);
+        ProviderManager providerManager = new ProviderManager(authenticationProvider);
+        providerManager.setEraseCredentialsAfterAuthentication(false);
+        return providerManager;
+
+    }
 
 
 }
